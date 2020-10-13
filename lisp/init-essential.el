@@ -2,6 +2,8 @@
 
 ;; Like "init-misc.el", the difference is this file is always loaded
 
+(setq counsel-etags-extra-tags-files '("/usr/include/TAGS"))
+
 (defun my-multi-purpose-grep (n)
   "Run different grep from N."
   (interactive "P")
