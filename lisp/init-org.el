@@ -199,5 +199,6 @@ skip user's own code in `org-mode-hook'."
         org-imenu-depth 9
         ;; @see http://irreal.org/blog/1
         org-src-fontify-natively t))
-
+(global-set-key (kbd "C-c a") 'org-agenda)
+(setq org-agenda-files  '("~/GTD"))
 (provide 'init-org)
