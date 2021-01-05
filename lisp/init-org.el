@@ -203,5 +203,5 @@ skip user's own code in `org-mode-hook'."
 (global-set-key (kbd "C-c C-r") 'org-store-link)
 (setq vc-follow-symlinks nil)
 (setq org-agenda-files  '("~/GTD"))
-(setq org-M-RET-may-splite-line nil)
+(setq org-M-RET-may-split-line nil)
 (provide 'init-org)
