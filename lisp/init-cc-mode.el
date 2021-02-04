@@ -69,4 +69,8 @@
       (eldoc-mode 1))))
 (add-hook 'c-mode-common-hook 'c-mode-common-hook-setup)
 
+(add-hook 'c-mode-common-hook
+          (lambda ()
+             (c-set-offset 'case-label '+)))
+
 (provide 'init-cc-mode)

@@ -116,5 +116,5 @@
       (insert (mapconcat 'identity names "\n")))))
 
 (provide 'init-theme)
-(load-theme 'srcery t)
+(load-theme 'twilight-bright t)
 ;;; init-theme.el ends here
