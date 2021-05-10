@@ -1,7 +1,8 @@
 ;; -*- coding: utf-8; lexical-binding: t; -*-
 
 ;; my private snippets, should be placed before enabling yasnippet
-(setq my-yasnippets (expand-file-name "~/my-yasnippets"))
+(setq my-yasnippets (expand-file-name "~/.emacs.d/my-yasnippets"))
+(setq cmake-tab-width 4)
 
 (defun my-enable-yas-minor-mode ()
   "Enable `yas-minor-mode'."

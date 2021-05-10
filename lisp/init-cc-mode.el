@@ -73,4 +73,8 @@
           (lambda ()
              (c-set-offset 'case-label '+)))
 
+;; Clang stuff
+(require 'clang-format)
+(setq clang-format-style "file")
+
 (provide 'init-cc-mode)
