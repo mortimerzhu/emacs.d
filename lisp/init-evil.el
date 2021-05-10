@@ -31,10 +31,6 @@
       undo-strong-limit 8000000
       undo-outer-limit 8000000)
 
-(defvar my-use-m-for-matchit nil
-  "If t, use \"m\" key for `evil-matchit-mode'.
-And \"%\" key is also restored to `evil-jump-item'.")
-
 ;; {{ @see https://github.com/timcharper/evil-surround for tutorial
 (my-run-with-idle-timer 2 #'global-evil-surround-mode)
 (with-eval-after-load 'evil-surround
@@ -54,7 +50,9 @@ And \"%\" key is also restored to `evil-jump-item'.")
       (push '(?\( . ("( " . ")")) evil-surround-pairs-alist)
       (push '(?` . ("`" . "'")) evil-surround-pairs-alist))
 
-    (when (derived-mode-p 'js-mode)
+    (when (or (derived-mode-p 'js-mode)
+              (memq major-mode '(typescript-mode web-mode)))
+      (push '(?j . ("JSON.stringify(" . ")")) evil-surround-pairs-alist)
       (push '(?> . ("(e) => " . "(e)")) evil-surround-pairs-alist))
 
     ;; generic
@@ -497,16 +495,50 @@ If INCLUSIVE is t, the text object is inclusive."
   :prefix ","
   :states '(normal visual))
 
-(defun my-rename-thing-at-point ()
-  "Rename thing at point."
-  (interactive)
+(defvar my-web-mode-element-rename-previous-tag nil
+  "Used by my-rename-thing-at-point.")
+
+(defun my-detect-new-html-tag (flag)
   (cond
+   ((eq flag 'pre)
+    (message "str=%s" (buffer-string (line-beginning-position) (line-end-position))))
+   ((eq flag 'post)
+    (message "str=%s" (buffer-string (line-beginning-position) (line-end-position))))))
+(push '(rename-html-tag my-detect-new-html-tag) evil-repeat-types)
+(evil-set-command-property #'web-mode-element-rename :repeat 'rename-html-tag)
+
+(defun my-rename-thing-at-point (&optional n)
+  "Rename thing at point.
+If N > 0 and working on HTML, repeating previous tag name operation.
+If N > 0 and working on javascript, only occurrences in current N lines are renamed."
+  (interactive "P")
+  (cond
+   ((eq major-mode 'web-mode)
+     (unless (and n my-web-mode-element-rename-previous-tag)
+       (setq my-web-mode-element-rename-previous-tag (read-string "New tag name? ")))
+     (web-mode-element-rename my-web-mode-element-rename-previous-tag))
+
    ((derived-mode-p 'js2-mode)
     ;; use `js2-mode' parser, much smarter and works in any scope
-    (js2hl-rename-thing-at-point))
+    (js2hl-rename-thing-at-point n))
+
    (t
     ;; simple string search/replace in function scope
     (evilmr-replace-in-defun))))
+
+(defun my-beautfiy-code (&optional indent-offset)
+  "Beautify code using INDENT-OFFSET."
+  (interactive "P")
+  (cond
+   ((derived-mode-p 'js-mode)
+    (my-js-beautify indent-offset))
+
+   ((derived-mode-p 'python-mode)
+    (when (and (boundp 'elpy-enabled-p) elpy-enabled-p))
+    (elpy-format-code))
+
+   (t
+    (message "Can only beautify code written in python/javascript"))))
 
 (my-comma-leader-def
   "," 'evilnc-comment-operator
@@ -557,6 +589,7 @@ If INCLUSIVE is t, the text object is inclusive."
   "wj" 'evil-window-down
   ;; }}
   "rv" 'my-rename-thing-at-point
+  "nm" 'js2hl-add-namespace-to-thing-at-point
   "rb" 'evilmr-replace-in-buffer
   "ts" 'evilmr-tag-selected-region ;; recommended
   "rt" 'counsel-etags-recent-tag
@@ -570,8 +603,8 @@ If INCLUSIVE is t, the text object is inclusive."
   "gl" 'my-git-log-trace-definition ; find history of a function or range
   "sh" 'my-select-from-search-text-history
   "rjs" 'run-js
-  "jsr" 'js-send-region
-  "jsb" 'js-clear-send-buffer
+  "jsr" 'js-comint-send-region
+  "jsb" 'my-js-clear-send-buffer
   "kb" 'kill-buffer-and-window ;; "k" is preserved to replace "C-g"
   "ls" 'highlight-symbol
   "lq" 'highlight-symbol-query-replace
@@ -581,7 +614,7 @@ If INCLUSIVE is t, the text object is inclusive."
   ;; p: previous; n: next; w:hash; W:complete hash; g:nth version; q:quit
   "tm" 'my-git-timemachine
   ;; toggle overview,  @see http://emacs.wordpress.com/2007/01/16/quick-and-dirty-code-folding/
-  "op" 'compile
+  "op" 'my-compile
   "c$" 'org-archive-subtree ; `C-c $'
   ;; org-do-demote/org-do-premote support selected region
   "c<" 'org-do-promote ; `C-c C-<'
@@ -597,7 +630,7 @@ If INCLUSIVE is t, the text object is inclusive."
   "db" 'diff-region-compare-with-b
   "di" 'evilmi-delete-items
   "si" 'evilmi-select-items
-  "jb" 'js-beautify
+  "jb" 'my-beautfiy-code
   "jp" 'my-print-json-path
   ;; {{ @see http://ergoemacs.org/emacs/emacs_pinky_2020.html
   ;; `keyfreq-show' proved sub-window operations happen most.
@@ -617,12 +650,11 @@ If INCLUSIVE is t, the text object is inclusive."
   "sd" 'split-window-horizontally
   "oo" 'delete-other-windows
   ;; }}
-  "xr" 'rotate-windows
+  "xr" 'my-rotate-windows
   "xt" 'toggle-two-split-window
   "uu" 'my-transient-winner-undo
   "fs" 'ffip-save-ivy-last
-  "fr" 'ffip-ivy-resume
-  "fc" 'cp-ffip-ivy-last
+  "fr" 'ivy-resume
   "ss" 'my-swiper
   "fb" '(lambda ()
           (interactive)
@@ -693,8 +725,14 @@ If INCLUSIVE is t, the text object is inclusive."
 
 ;; Please check "init-ediff.el" which contains `my-space-leader-def' code too
 (my-space-leader-def
-  "n" 'my-goto-next-hunk
-  "p" 'my-goto-previous-hunk
+  "n" (lambda ()
+        (interactive)
+        (if (derived-mode-p 'diff-mode) (my-search-next-diff-hunk)
+          (my-search-next-merge-conflict)))
+  "p" (lambda ()
+        (interactive)
+        (if (derived-mode-p 'diff-mode) (my-search-prev-diff-hunk)
+          (my-search-prev-merge-conflict)))
   "ch" 'my-dired-redo-from-commands-history
   "dd" 'pwd
   "mm" 'counsel-evil-goto-global-marker
@@ -735,17 +773,6 @@ If INCLUSIVE is t, the text object is inclusive."
   "te" 'js2-mode-toggle-element
   "tf" 'js2-mode-toggle-hide-functions)
 ;; }}
-
-(defun my-evil-delete-hack (orig-func &rest args)
-  "Press `dd' to delete lines in `wgrep-mode' in evil directly."
-  ;; make buffer writable
-  (if (and (boundp 'wgrep-prepared) wgrep-prepared)
-      (wgrep-toggle-readonly-area))
-  (apply orig-func args)
-  ;; make buffer read-only
-  (if (and (boundp 'wgrep-prepared) wgrep-prepared)
-      (wgrep-toggle-readonly-area)))
-(advice-add 'evil-delete :around #'my-evil-delete-hack)
 
 ;; {{ Use `;` as leader key, for searching something
 (general-create-definer my-semicolon-leader-def
@@ -812,6 +839,8 @@ If INCLUSIVE is t, the text object is inclusive."
 ;; {{ evil-nerd-commenter
 (my-run-with-idle-timer 2 #'evilnc-default-hotkeys)
 (define-key evil-motion-state-map "gc" 'evilnc-comment-operator) ; same as doom-emacs
+(define-key evil-motion-state-map "gb" 'evilnc-copy-and-comment-operator)
+(define-key evil-motion-state-map "gy" 'evilnc-yank-and-comment-operator)
 
 (defun my-current-line-html-p (paragraph-region)
   "Is current line html?"
