@@ -432,7 +432,7 @@ FN checks these characters belong to normal word characters."
 ;; Step 2: Select another region and `M-x diff-region-compare-with-b'
 ;; Press "q" in evil-mode or "C-c C-c" to exit the diff output buffer
 (defun diff-region-format-region-boundary (b e)
-  "Make sure lines are selected and B is less than E"
+  "Make sure lines are selected and B is less than E."
   (let* (tmp rlt)
     ;; swap b e, make sure b < e
     (when (> b e)
@@ -483,10 +483,11 @@ FN checks these characters belong to normal word characters."
   (message "Now select other region to compare and run `diff-region-compare-with-b'"))
 
 (defun diff-region-compare-with-b ()
-  "Compare current region with the region set by `diff-region-tag-selected-as-a'.
+  "Compare current region with region from `diff-region-tag-selected-as-a'.
 If no region is selected, `kill-ring' or clipboard is used instead."
   (interactive)
   (let* (rlt-buf
+         cmd
          diff-output
          tmp
          ;; file A
@@ -503,6 +504,7 @@ If no region is selected, `kill-ring' or clipboard is used instead."
         ;; text from selected region
         (setq tmp (diff-region-format-region-boundary (region-beginning) (region-end)))
         (write-region (car tmp) (cadr tmp) fb))
+
        (t
         ;; text from `kill-ring' or clipboard
         (let* ((choice (completing-read "Since no region selected, compare text in:"
@@ -514,32 +516,36 @@ If no region is selected, `kill-ring' or clipboard is used instead."
                       (my-gclip)))))
           (with-temp-file fb
             (insert txt)))))
+
       ;; save region A as file A
       (save-current-buffer
         (set-buffer (get-buffer-create "*Diff-regionA*"))
         (write-region (point-min) (point-max) fa))
+
+
       ;; diff NOW!
-      ;; show the diff output
+      ;; prepare diff command, I prefer "git diff" because it has more features
       (cond
-       ((string= (setq diff-output (shell-command-to-string (format "%s -Nabur %s %s" diff-command fa fb))) "")
-        (message "Two regions are SAME!"))
        ((executable-find "git")
-        (my-ensure 'magit)
-        (magit-diff-setup nil (list "--no-index" "--indent-heuristic" "--histogram")
-                          nil (list (magit-convert-filename-for-git
-                                     (expand-file-name fa))
-                                    (magit-convert-filename-for-git
-                                     (expand-file-name fb))))
-        (ffip-diff-mode))
+        (setq cmd (format "git diff --no-index --histogram --ignore-cr-at-eol -b -w -B \"%s\" \"%s\"" fa fb)))
+
+       ((executable-find diff-command)
+        (setq cmd (format "%s -u -b -w -B \"%s\" \"%s\"" diff-command fa fb))))
+
+      (cond
+       ((not cmd)
+        (message "Please add git or diff into environment variable PATH first!"))
+
+       ((string= (setq diff-output (shell-command-to-string cmd)) "")
+        (message "Two regions are SAME!"))
+
        (t
-        (diff-region-open-diff-output diff-output
-                                      "*Diff-region-output*")))
+        ;; show the diff output
+        (diff-region-open-diff-output diff-output "*Diff-region-output*")))
+
       ;; clean the temporary files
-      (if (and fa (file-exists-p fa))
-          (delete-file fa))
-      (if (and fb (file-exists-p fb))
-          (delete-file fb)))))
-;; }}
+      (if (and fa (file-exists-p fa)) (delete-file fa))
+      (if (and fb (file-exists-p fb)) (delete-file fb)))))
 
 ;; {{ cliphist.el
 (setq cliphist-use-ivy t)
@@ -1225,6 +1231,48 @@ See https://github.com/RafayGhafoor/Subscene-Subtitle-Grabber."
   ;; don't wrap lines because there is table in `markdown-mode'
   (setq truncate-lines t))
 (add-hook 'markdown-mode-hook 'markdown-mode-hook-setup)
+;; }}
+
+;; {{ pdf
+(defun my-open-pdf-from-history ()
+  "Open pdf and go to page from history."
+  (interactive)
+  (let* ((link (completing-read "Open pdf:::page: " my-pdf-view-from-history)))
+    (when link
+      (let* ((items (split-string link ":::"))
+             (pdf-file (nth 0 items))
+             (pdf-page (string-to-number (nth 1 items))))
+        (my-ensure 'org)
+        (my-focus-on-pdf-window-then-back
+         (lambda (pdf-file)
+           (when (string= (file-name-base pdf-file) (file-name-base pdf-file))
+             (my-pdf-view-goto-page pdf-page))))))))
+
+(defun my-open-pdf-next-page (&optional n)
+  "Open pdf and go to next N page."
+  (interactive "p")
+  (my-focus-on-pdf-window-then-back
+   (lambda (pdf-file)
+     (pdf-view-next-page n))))
+
+(defun my-open-pdf-previous-page (&optional n)
+  "Open pdf and go to next N page."
+  (interactive "p")
+  (my-focus-on-pdf-window-then-back
+   (lambda (pdf-file)
+     (pdf-view-previous-page n))))
+
+(defun my-open-pdf-goto-page (&optional n)
+  "Open pdf and go to page N.
+Org node property PDF_PAGE_OFFSET is used to calculate physical page number."
+  (interactive "p")
+  (let* ((page-offset (org-entry-get (point) "PDF_PAGE_OFFSET")))
+    (setq page-offset (if page-offset (string-to-number page-offset) 0))
+    (unless n (setq n 1))
+    (setq n (+ n page-offset))
+    (my-focus-on-pdf-window-then-back
+     (lambda (pdf-file)
+       (pdf-view-goto-page n)))))
 ;; }}
 
 (provide 'init-misc)
