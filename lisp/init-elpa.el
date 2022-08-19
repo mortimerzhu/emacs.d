@@ -148,6 +148,7 @@
     company-statistics
     jenkinsfile-mode
     powershell
+    clang-format
     graphql-mode
     company-statistics)
   "Packages to install from melpa-unstable.")
@@ -161,23 +162,23 @@
       '(
         ;; uncomment below line if you need use GNU ELPA
         ;; ("gnu" . "https://elpa.gnu.org/packages/")
-        ;;("melpa" . "https://melpa.org/packages/")
-        ;;("melpa-stable" . "https://stable.melpa.org/packages/")
+        ;; ("melpa" . "https://melpa.org/packages/")
+        ;; ("melpa-stable" . "https://stable.melpa.org/packages/")
 
         ;; Use either 163 or tsinghua mirror repository when official melpa
         ;; is slow or shutdown.
 
         ;; ;; {{ Option 1: 163 mirror repository:
         ;; ;; ("gnu" . "https://mirrors.163.com/elpa/gnu/")
-        ;; ("melpa" . "https://mirrors.163.com/elpa/melpa/")
-        ;; ("melpa-stable" . "https://mirrors.163.com/elpa/stable-melpa/")
+         ("melpa" . "https://mirrors.163.com/elpa/melpa/")
+        ("melpa-stable" . "https://mirrors.163.com/elpa/stable-melpa/")
         ;; ;; }}
 
         ;; ;; {{ Option 2: tsinghua mirror repository
         ;; ;; @see https://mirror.tuna.tsinghua.edu.cn/help/elpa/ on usage:
         ;; ;; ("gnu"   . "http://mirrors.tuna.tsinghua.edu.cn/elpa/gnu/")
-         ("melpa" . "http://elpa.emacs-china.org/melpa/")
-         ("melpa-stable" . "http://elpa.emacs-china.org/stable-melpa/")
+         ;; ;; ("melpa" . "http://elpa.emacs-china.org/melpa/")
+         ;; ;; ("melpa-stable" . "http://elpa.emacs-china.org/stable-melpa/")
         ;; }}
         ))
 
@@ -390,6 +391,10 @@ If NO-REFRESH is nil, `package-refresh-contents' is called."
 (require-package 'graphql-mode)
 (require-package 'ob-sagemath)
 (require-package 'pulseaudio-control)
+
+(require-package 'go-mode)
+(require-package 'clang-format)
+(require-package 'jenkinsfile-mode)
 
 (defvar my-color-themes
   '(afternoon-theme
