@@ -149,6 +149,8 @@
     jenkinsfile-mode
     powershell
     clang-format
+    org-roam
+    org-bullets
     graphql-mode
     company-statistics)
   "Packages to install from melpa-unstable.")
