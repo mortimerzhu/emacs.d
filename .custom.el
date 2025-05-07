@@ -132,6 +132,11 @@
          (file+head "reference/%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
          :immediate-finish t
          :unnarrowed t)
+        ("i" "ai" plain "%?"
+         :if-new
+         (file+head "reference/%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n#+filetags: AI\n* 原文\n\n\n* 个人理解\n\n\n* 来源\n\n")
+         :immediate-finish t
+         :unnarrowed t)
         ("b" "taiji reference" plain
          "%?"
          :if-new
@@ -279,3 +284,4 @@
 ;; jsx tsx mode support
 (require-package 'jtsx)
 (add-to-list 'auto-mode-alist '("\\.tsx\\'" . jtsx-tsx-mode))
+(add-to-list 'auto-mode-alist '("\\.js\\'" . js-mode))
