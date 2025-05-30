@@ -1,6 +1,9 @@
 ;; add unstable pakcages to list if want to install unstable packages and can not find the pakcage in package list
 (add-to-list 'melpa-include-packages 'clang-format)
 
+(when (eq system-type 'darwin)
+  (setenv "PATH" (concat "/usr/local/bin:" (getenv "PATH"))))
+
 (require-package 'go-mode)
 (add-hook 'c-mode-common-hook
           (lambda ()
