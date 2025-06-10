@@ -9,6 +9,9 @@
           (lambda ()
             (c-set-offset 'case-label '+)))
 
+(require-package 'lsp-mode)
+(add-hook 'c++-mode-hook #'lsp)
+
 ;; Clang stuff
 (require-package 'clang-format)
 (setq clang-format-style "file")
