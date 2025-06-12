@@ -16,6 +16,7 @@
 (require-package 'clang-format)
 (setq clang-format-style "file")
 (c-set-offset 'innamespace 0)
+(evil-define-key 'visual 'global (kbd "=") 'clang-format-region)
 
 ;; Mac Only
 (defvar my-term-program "/bin/zsh")
